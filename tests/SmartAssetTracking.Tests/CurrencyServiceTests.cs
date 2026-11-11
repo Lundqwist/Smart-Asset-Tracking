@@ -1,3 +1,12 @@
+// ============================================================================
+// CurrencyServiceTests.cs - tests for USD -> local currency conversion (Level 3)
+// ----------------------------------------------------------------------------
+// The test settings use simple rates (1 USD = 10 SEK, 0.9 EUR, 40 TRY),
+// so the expected results are easy to check in your head.
+// "await using var host = ..." creates a fresh test application and
+// automatically cleans it up when the test ends.
+// ============================================================================
+
 using SmartAssetTracking.Models;
 using SmartAssetTracking.Services;
 

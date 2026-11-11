@@ -1,3 +1,12 @@
+// ============================================================================
+// ReportAndExportTests.cs - tests for reports, the dashboard and file export
+// ----------------------------------------------------------------------------
+// "seed: true" fills the test database with the same 20 demo assets as the
+// real program, so the reports have realistic data to work on.
+// The export tests write real TXT/CSV/JSON files to a temporary folder and
+// check their contents.
+// ============================================================================
+
 using SmartAssetTracking.Reports;
 using SmartAssetTracking.Services;
 

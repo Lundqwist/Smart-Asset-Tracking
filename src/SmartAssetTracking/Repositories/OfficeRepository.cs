@@ -1,9 +1,18 @@
+// ============================================================================
+// OfficeRepository.cs
+// ----------------------------------------------------------------------------
+// Reads and writes offices in the database. It works the same way as
+// AssetRepository (see the comments there for a longer explanation of the
+// repository pattern, interfaces and DbContext factories).
+// ============================================================================
+
 using Microsoft.EntityFrameworkCore;
 using SmartAssetTracking.Data;
 using SmartAssetTracking.Models;
 
 namespace SmartAssetTracking.Repositories;
 
+// The contract: everything you can do with offices in the database.
 public interface IOfficeRepository
 {
     Task<List<Office>> GetAllAsync(CancellationToken ct = default);
@@ -20,6 +29,7 @@ public class OfficeRepository(IDbContextFactory<AppDbContext> contextFactory) : 
     public async Task<List<Office>> GetAllAsync(CancellationToken ct = default)
     {
         await using var db = await contextFactory.CreateDbContextAsync(ct);
+        // SELECT * FROM Offices ORDER BY Id
         return await db.Offices.AsNoTracking().OrderBy(o => o.Id).ToListAsync(ct);
     }
 
@@ -29,6 +39,7 @@ public class OfficeRepository(IDbContextFactory<AppDbContext> contextFactory) : 
         return await db.Offices.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id, ct);
     }
 
+    // Used to stop two offices from getting the same name.
     public async Task<bool> NameExistsAsync(string name, int? excludeOfficeId = null, CancellationToken ct = default)
     {
         await using var db = await contextFactory.CreateDbContextAsync(ct);
@@ -36,6 +47,7 @@ public class OfficeRepository(IDbContextFactory<AppDbContext> contextFactory) : 
         return await db.Offices.AnyAsync(o => o.Name.ToLower() == normalized && (excludeOfficeId == null || o.Id != excludeOfficeId), ct);
     }
 
+    // How many assets are in this office? (We refuse to delete offices that still have assets.)
     public async Task<int> CountAssetsAsync(int officeId, CancellationToken ct = default)
     {
         await using var db = await contextFactory.CreateDbContextAsync(ct);
@@ -55,7 +67,7 @@ public class OfficeRepository(IDbContextFactory<AppDbContext> contextFactory) : 
         await using var db = await contextFactory.CreateDbContextAsync(ct);
         var existing = await db.Offices.FirstOrDefaultAsync(o => o.Id == office.Id, ct)
                        ?? throw new KeyNotFoundException($"Office {office.Id} was not found.");
-        db.Entry(existing).CurrentValues.SetValues(office);
+        db.Entry(existing).CurrentValues.SetValues(office); // copy the new values onto the loaded row
         await db.SaveChangesAsync(ct);
     }
 

@@ -1,3 +1,12 @@
+// ============================================================================
+// AuthAndHelperTests.cs - tests for login, passwords, roles and input parsing
+// ----------------------------------------------------------------------------
+//   * passwords are hashed and salted (the same password gives different hashes)
+//   * the admin / 1234 login from the assignment works, and wrong passwords fail
+//   * only Admins may manage users
+//   * email validation, and the number/date parsing used by the input prompts
+// ============================================================================
+
 using SmartAssetTracking.Helpers;
 using SmartAssetTracking.Models;
 using SmartAssetTracking.Services;

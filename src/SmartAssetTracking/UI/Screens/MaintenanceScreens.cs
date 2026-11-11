@@ -1,3 +1,12 @@
+// ============================================================================
+// MaintenanceScreens.cs
+// ----------------------------------------------------------------------------
+// The "Maintenance" menu (Level 5: maintenance tracking).
+//   * Maintenance schedule - all assets with a planned next maintenance,
+//                            with overdue ones in red and upcoming ones in yellow
+//   * Record maintenance   - save last date, next date and notes (Manager+)
+// ============================================================================
+
 using SmartAssetTracking.Helpers;
 using SmartAssetTracking.Models;
 using SmartAssetTracking.Services;
@@ -35,7 +44,7 @@ public class MaintenanceScreens(
         foreach (var a in scheduled)
             table.AddRow(a.Id.ToString(), Markup.Escape(a.DisplayName), Markup.Escape(a.Office.Name),
                 a.LastMaintenanceDate?.ToString("yyyy-MM-dd") ?? "[grey]never[/]",
-                view.NextMaintenanceMarkup(a),
+                view.NextMaintenanceMarkup(a),        // coloured red/yellow/normal
                 Markup.Escape(a.MaintenanceNotes ?? ""));
 
         AnsiConsole.Write(table);
@@ -48,7 +57,9 @@ public class MaintenanceScreens(
         AnsiConsole.WriteLine();
 
         var today = lifecycle.Today;
+        // Must be between the purchase date and today.
         var performed = ConsoleInput.Date("Maintenance performed on", today, asset.PurchaseDate, today);
+        // Suggest the next maintenance 6 months later (optional).
         var next = ConsoleInput.OptionalDate("Next maintenance date", performed.AddMonths(6), performed.AddDays(1));
         var notes = ConsoleInput.OptionalText("Maintenance notes", asset.MaintenanceNotes, 500);
 

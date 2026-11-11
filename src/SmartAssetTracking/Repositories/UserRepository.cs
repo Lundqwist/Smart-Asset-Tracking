@@ -1,3 +1,10 @@
+// ============================================================================
+// UserRepository.cs
+// ----------------------------------------------------------------------------
+// Reads and writes login accounts in the database. It follows the same
+// pattern as AssetRepository (see the comments there).
+// ============================================================================
+
 using Microsoft.EntityFrameworkCore;
 using SmartAssetTracking.Data;
 using SmartAssetTracking.Models;
@@ -19,6 +26,7 @@ public class UserRepository(IDbContextFactory<AppDbContext> contextFactory) : IU
     public async Task<List<User>> GetAllAsync(CancellationToken ct = default)
     {
         await using var db = await contextFactory.CreateDbContextAsync(ct);
+        // Include the linked employee, so the user list can show who each account belongs to.
         return await db.Users.AsNoTracking().Include(u => u.Employee).OrderBy(u => u.Username).ToListAsync(ct);
     }
 
@@ -28,6 +36,7 @@ public class UserRepository(IDbContextFactory<AppDbContext> contextFactory) : IU
         return await db.Users.AsNoTracking().Include(u => u.Employee).FirstOrDefaultAsync(u => u.Id == id, ct);
     }
 
+    // Used when logging in. "Admin" and "admin" find the same user (the match ignores case).
     public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct = default)
     {
         await using var db = await contextFactory.CreateDbContextAsync(ct);

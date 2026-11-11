@@ -1,3 +1,15 @@
+// ============================================================================
+// AuthService.cs
+// ----------------------------------------------------------------------------
+// "Auth" is short for authentication (proving who you are, by logging in)
+// and authorization (what you are allowed to do, based on your role).
+//
+// Level 5 asks for a simulated login (username: admin, password: 1234) and
+// the roles Admin / Manager / Employee. This service handles logging in and
+// out, plus managing user accounts. Account management is Admin only, but
+// every user may change their own password.
+// ============================================================================
+
 using Microsoft.Extensions.Logging;
 using SmartAssetTracking.Helpers;
 using SmartAssetTracking.Models;
@@ -26,12 +38,17 @@ public class AuthService(
 {
     public const int MinPasswordLength = 4;
 
+    // Returns true if the username and password are correct.
+    // On success the user is stored in the session, so the rest of the program knows who is logged in.
     public async Task<bool> LoginAsync(string username, string password, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
             return false;
 
         var user = await users.GetByUsernameAsync(username, ct);
+
+        // "||" means OR. We give the same answer whether the user doesn't exist or the
+        // password is wrong, so an attacker can't find out which usernames exist.
         if (user is null || !PasswordHasher.Verify(password, user.PasswordHash))
         {
             logger.LogWarning("Failed login attempt for {Username}", username);
@@ -62,6 +79,7 @@ public class AuthService(
 
         var errors = new ValidationErrors()
             .RequireText(username, "Username", 50)
+            // .All(...) is true if EVERY character passes the test: letters, digits, '.', '_' or '-'.
             .Require(string.IsNullOrWhiteSpace(username) || username.Trim().All(c => char.IsLetterOrDigit(c) || c is '.' or '_' or '-'),
                 "Username may only contain letters, digits, '.', '_' and '-'.")
             .Require(password?.Length >= MinPasswordLength, $"Password must be at least {MinPasswordLength} characters.")
@@ -78,6 +96,7 @@ public class AuthService(
         var user = new User
         {
             Username = username.Trim(),
+            // "password!" - the "!" tells the compiler "I know this isn't null" (we checked it above).
             PasswordHash = PasswordHasher.Hash(password!),
             Role = role,
             EmployeeId = employeeId
@@ -91,6 +110,8 @@ public class AuthService(
     {
         session.Require(UserRole.Admin);
         var user = await GetUserAsync(userId, ct);
+
+        // Safety rule: an admin can't accidentally lock themselves out of the admin menus.
         if (user.Id == session.CurrentUser!.Id && role != UserRole.Admin)
             throw new ValidationException("You cannot remove your own Admin role.");
 
@@ -99,6 +120,7 @@ public class AuthService(
         logger.LogInformation("Admin {Admin} changed role of {Username} to {Role}", session.CurrentUser.Username, user.Username, role);
     }
 
+    // Admin sets a new password for someone who has forgotten theirs.
     public async Task ResetPasswordAsync(int userId, string newPassword, CancellationToken ct = default)
     {
         session.Require(UserRole.Admin);
@@ -109,9 +131,10 @@ public class AuthService(
         logger.LogInformation("Admin {Admin} reset password for {Username}", session.CurrentUser?.Username, user.Username);
     }
 
+    // Any logged-in user may change their own password, but they must know the current one.
     public async Task ChangeOwnPasswordAsync(string currentPassword, string newPassword, CancellationToken ct = default)
     {
-        session.Require(UserRole.Employee);
+        session.Require(UserRole.Employee); // Employee is the lowest role, so this just means "logged in"
         var user = await GetUserAsync(session.CurrentUser!.Id, ct);
         if (!PasswordHasher.Verify(currentPassword, user.PasswordHash))
             throw new ValidationException("The current password is incorrect.");
@@ -119,7 +142,7 @@ public class AuthService(
 
         user.PasswordHash = PasswordHasher.Hash(newPassword);
         await users.UpdateAsync(user, ct);
-        session.SignIn(user);
+        session.SignIn(user); // refresh the session with the updated user
         logger.LogInformation("User {Username} changed their password", user.Username);
     }
 
@@ -133,6 +156,7 @@ public class AuthService(
         logger.LogInformation("Admin {Admin} deleted user {UserId}", session.CurrentUser.Username, userId);
     }
 
+    // Small private helpers used by the methods above.
     private async Task<User> GetUserAsync(int id, CancellationToken ct) =>
         await users.GetByIdAsync(id, ct) ?? throw new NotFoundException($"No user with ID {id} exists.");
 

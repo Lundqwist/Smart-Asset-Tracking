@@ -1,3 +1,15 @@
+// ============================================================================
+// SqlServerIntegrationTests.cs - one test against a REAL SQL Server database
+// ----------------------------------------------------------------------------
+// A "unit test" checks one piece in isolation (with the fake InMemory database).
+// An "integration test" checks that pieces work TOGETHER with real systems.
+// This test creates a temporary database on SQL Server Express, runs the real
+// migrations, tests the queries and CRUD, and deletes the database afterwards.
+//
+// It is skipped by default, because it needs SQL Server installed. To run it:
+//     $env:SMARTASSET_SQL_TESTS = "1"; dotnet test
+// ============================================================================
+
 using SmartAssetTracking.Models;
 using SmartAssetTracking.Repositories;
 using SmartAssetTracking.Services;

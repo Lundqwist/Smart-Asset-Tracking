@@ -1,3 +1,13 @@
+// ============================================================================
+// OfficeScreens.cs
+// ----------------------------------------------------------------------------
+// The "Offices" menu (Level 3: global office management).
+//   * Offices overview       - every office with currency, rate, asset count and value
+//   * Show assets in office  - like the "STOCKHOLM OFFICE" example in the PDF,
+//                              with prices in local currency and a total value
+//   * Add / Edit / Delete    - Admin only
+// ============================================================================
+
 using SmartAssetTracking.Helpers;
 using SmartAssetTracking.Models;
 using SmartAssetTracking.Repositories;
@@ -25,6 +35,7 @@ public class OfficeScreens(
         new MenuItem("Delete office", DeleteAsync, UserRole.Admin),
     ]);
 
+    // A table with one row per office.
     private async Task OverviewAsync()
     {
         var summaries = await reports.GetOfficeSummariesAsync();
@@ -41,7 +52,7 @@ public class OfficeScreens(
             var info = currency.Get(s.Currency);
             table.AddRow(
                 s.OfficeId.ToString(), Markup.Escape(s.Office), Markup.Escape(s.Country), $"{info.Code} ({Markup.Escape(info.Symbol)})",
-                info.RateFromUsd.ToString("0.####"),
+                info.RateFromUsd.ToString("0.####"),   // "0.####" = up to 4 decimals, without trailing zeros
                 s.AssetCount.ToString(),
                 s.ExpiringSoon > 0 ? $"[yellow]{s.ExpiringSoon}[/]" : "0",
                 Markup.Escape(currency.Format(s.TotalValueLocal, s.Currency)),
@@ -51,6 +62,7 @@ public class OfficeScreens(
         AnsiConsole.Write(table);
     }
 
+    // The assets of one office, with prices in that office's currency and a total at the bottom.
     private async Task OfficeAssetsAsync()
     {
         var office = await assetScreens.SelectOfficeAsync("Select office");
@@ -64,6 +76,7 @@ public class OfficeScreens(
 
         foreach (var a in list)
         {
+            // Each row is coloured by the asset's lifecycle status.
             var status = lifecycle.GetStatus(a);
             var color = ConsoleUi.StatusColor(status);
             table.AddRow($"[{color}]{a.Id}[/]", $"[{color}]{Markup.Escape(a.TypeName)}[/]", $"[{color}]{Markup.Escape(a.Brand)}[/]",
@@ -71,6 +84,7 @@ public class OfficeScreens(
                 ConsoleUi.StatusBadge(status));
         }
 
+        // Sum all USD prices, then convert the total once to the office currency.
         var total = currency.ConvertFromUsd(list.Sum(a => a.PurchasePriceUsd), office.CurrencyCode);
         table.Caption($"[bold]Total office value: {Markup.Escape(currency.Format(total, office.CurrencyCode))}[/] [grey]({list.Count} assets)[/]");
         AnsiConsole.Write(table);
@@ -89,6 +103,7 @@ public class OfficeScreens(
     private async Task EditAsync()
     {
         var office = await assetScreens.SelectOfficeAsync("Office to edit");
+        // The current values are shown as defaults. Press Enter to keep them.
         var name = ConsoleInput.Text("Office name", office.Name, 100);
         var country = ConsoleInput.Text("Country", office.Country, 60);
         var code = SelectCurrency(office.CurrencyCode);
@@ -102,10 +117,12 @@ public class OfficeScreens(
         var office = await assetScreens.SelectOfficeAsync("Office to delete");
         if (!ConsoleInput.Confirm($"Delete office '{office.Name}'?"))
             return;
+        // The service refuses if the office still has assets (MenuRunner shows that message).
         await offices.DeleteAsync(office.Id);
         ConsoleUi.Success($"Office '{office.Name}' was deleted.");
     }
 
+    // Lets the user pick one of the currencies configured in appsettings.json.
     private string SelectCurrency(string? current)
     {
         var list = currency.Currencies.OrderByDescending(c => c.Code == current).ThenBy(c => c.Code).ToList();

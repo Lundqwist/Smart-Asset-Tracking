@@ -1,3 +1,15 @@
+// ============================================================================
+// ReportScreens.cs
+// ----------------------------------------------------------------------------
+// Draws the dashboard (Level 5) and the "Reports & export" menu (Levels 3-4):
+//   * Office report, assets near expiration, most expensive, per employee
+//   * Export any report to TXT / CSV / JSON
+//   * Exchange rates (and updating them from the internet, Admin only)
+//
+// The numbers come from ReportService. This class only draws them, using
+// Spectre.Console tables, panels and bar charts.
+// ============================================================================
+
 using SmartAssetTracking.Helpers;
 using SmartAssetTracking.Models;
 using SmartAssetTracking.Reports;
@@ -31,11 +43,14 @@ public class ReportScreens(
 
     public async Task DashboardAsync()
     {
+        // Show a spinner while the statistics are calculated. "_ =>" ignores the status context parameter.
         var stats = await AnsiConsole.Status().Spinner(Spinner.Known.Dots)
             .StartAsync("Calculating statistics...", _ => reports.GetDashboardAsync());
 
+        // Local helper: format an amount in the reporting currency (e.g. "227 210,00 kr").
         string Value(decimal amount) => Markup.Escape(currency.Format(amount, stats.ReportingCurrency));
 
+        // Left box: the key figures (label on the left, value on the right).
         var keyFigures = new Grid().AddColumn(new GridColumn().PadRight(2)).AddColumn(new GridColumn().RightAligned());
         keyFigures.AddRow("[grey]Total assets[/]", $"[bold]{stats.TotalAssets}[/]");
         keyFigures.AddRow("[grey]Total employees[/]", $"[bold]{stats.TotalEmployees}[/]");
@@ -48,8 +63,12 @@ public class ReportScreens(
         keyFigures.AddRow("[grey]Top asset type[/]", $"[bold]{Markup.Escape(stats.TopAssetType ?? "—")}[/] [grey]({stats.TopAssetTypeCount})[/]");
         keyFigures.AddRow("[grey]Most valuable office[/]", $"[bold]{Markup.Escape(stats.MostValuableOffice ?? "—")}[/]");
 
+        // Right box: two bar charts.
         var officeChart = new BarChart().Width(50).Label("[bold]Assets per office[/]").LeftAlignLabel();
         var colors = new[] { Color.Aqua, Color.Yellow, Color.Green, Color.Fuchsia, Color.Orange1, Color.Blue };
+
+        // .Select((o, i) => (o, i)) pairs each item with its position (0, 1, 2...),
+        // so each bar can get a different colour. "%" (modulo) restarts the colour list if it runs out.
         foreach (var (office, i) in stats.Offices.Select((o, i) => (o, i)))
             officeChart.AddItem(office.Office, office.AssetCount, colors[i % colors.Length]);
 
@@ -57,10 +76,12 @@ public class ReportScreens(
         foreach (var (type, i) in stats.AssetsPerType.Select((t, i) => (t, i)))
             typeChart.AddItem(type.Type, type.Count, colors[(i + 2) % colors.Length]);
 
+        // Columns places the two panels side by side.
         AnsiConsole.Write(new Columns(
             new Panel(keyFigures).Header("[bold] DASHBOARD [/]").BorderColor(Color.Aqua).RoundedBorder(),
             new Panel(new Rows(officeChart, new Text(""), typeChart)).BorderColor(Color.Grey).RoundedBorder()));
 
+        // Below: a table of assets per employee.
         var employees = new Table().Border(TableBorder.Rounded).BorderColor(Color.Grey).Title("[bold]Assets per employee[/]")
             .AddColumn("[bold]Employee[/]").AddColumn("[bold]Department[/]").AddColumn("[bold]Assets[/]", c => c.RightAligned());
         foreach (var e in stats.AssetsPerEmployee)
@@ -73,6 +94,7 @@ public class ReportScreens(
 
     // ------------------------------------------------------------------ Reports
 
+    // Level 3: total asset value and asset count per office.
     private async Task OfficeReportAsync()
     {
         var summaries = await reports.GetOfficeSummariesAsync();
@@ -86,18 +108,21 @@ public class ReportScreens(
             table.AddRow(Markup.Escape(s.Office), s.AssetCount.ToString(), s.ExpiringSoon.ToString(), s.Expired.ToString(),
                 Markup.Escape(currency.Format(s.TotalValueLocal, s.Currency)), Markup.Escape(currency.Format(s.TotalValueUsd, "USD")));
 
+        // A totals row at the bottom. Local currencies differ, so only the USD total makes sense.
         table.AddEmptyRow();
         table.AddRow("[bold]Total[/]", $"[bold]{summaries.Sum(s => s.AssetCount)}[/]", $"[bold]{summaries.Sum(s => s.ExpiringSoon)}[/]",
             $"[bold]{summaries.Sum(s => s.Expired)}[/]", "",
             $"[bold]{Markup.Escape(currency.Format(summaries.Sum(s => s.TotalValueUsd), "USD"))}[/]");
         AnsiConsole.Write(table);
 
+        // BarChart values must be "double", so we convert the decimal with (double).
         var chart = new BarChart().Width(70).Label("[bold]Total value per office (USD)[/]").LeftAlignLabel();
         foreach (var s in summaries)
             chart.AddItem(s.Office, (double)s.TotalValueUsd, Color.Aqua);
         AnsiConsole.Write(chart);
     }
 
+    // Level 3: assets close to expiration (YELLOW or RED), most urgent first.
     private async Task NearExpirationAsync()
     {
         var list = await assets.GetExpiringSoonAsync();
@@ -118,6 +143,7 @@ public class ReportScreens(
         AnsiConsole.Write(table);
     }
 
+    // Level 3: most expensive assets. The user chooses how many to show.
     private async Task MostExpensiveAsync()
     {
         var top = ConsoleInput.Integer("How many assets", 1, 100, 10);
@@ -145,6 +171,7 @@ public class ReportScreens(
 
     // ------------------------------------------------------------------ Export
 
+    // Level 4: pick a report, then a format (TXT / CSV / JSON). The file is saved in the "exports" folder.
     private async Task ExportAsync()
     {
         var reportTypes = new[]
@@ -158,6 +185,7 @@ public class ReportScreens(
         };
         var choice = ConsoleInput.Select("Which report do you want to export?", reportTypes, r => r);
 
+        // Asset lists are converted to flat rows first (exporter.ToRows). Summary records can be exported as they are.
         switch (choice)
         {
             case "All assets":
@@ -183,6 +211,8 @@ public class ReportScreens(
 
     // ------------------------------------------------------------------ Currency
 
+    // Shows the exchange rate table. The method has nothing to "await", so it returns
+    // Task.CompletedTask (an already-finished task) to match the menu's async signature.
     private Task ExchangeRatesAsync()
     {
         var table = new Table().Border(TableBorder.Rounded).BorderColor(Color.Grey).Title("[bold]Exchange rates (base USD)[/]")
@@ -200,6 +230,7 @@ public class ReportScreens(
         return Task.CompletedTask;
     }
 
+    // Admin only: download current rates from the internet, then show them.
     private async Task RefreshRatesAsync()
     {
         var updated = await AnsiConsole.Status().Spinner(Spinner.Known.Dots)

@@ -1,3 +1,13 @@
+// ============================================================================
+// EmployeeScreens.cs
+// ----------------------------------------------------------------------------
+// The "Employees & assignments" menu (Level 5: asset assignment).
+//   * List employees, show one employee's assets ("EMPLOYEE ASSETS" view)
+//   * Assign / unassign an asset to an employee
+//   * Add / edit employees (Manager), delete (Admin)
+//   * "My assets" in the main menu, for any logged-in user linked to an employee
+// ============================================================================
+
 using SmartAssetTracking.Helpers;
 using SmartAssetTracking.Models;
 using SmartAssetTracking.Services;
@@ -29,6 +39,7 @@ public class EmployeeScreens(
     /// <summary>"My assets" for the logged-in user (any role linked to an employee).</summary>
     public async Task MyAssetsAsync()
     {
+        // The logged-in user's account may be linked to an employee record.
         var employeeId = session.CurrentUser?.EmployeeId;
         if (employeeId is null)
         {
@@ -58,9 +69,11 @@ public class EmployeeScreens(
     private async Task ShowEmployeeAssetsAsync()
     {
         var employee = await SelectEmployeeAsync("Select employee");
+        // Reload by Id so the assigned assets (and their offices) are included.
         RenderEmployeeAssets(await employees.GetByIdAsync(employee.Id));
     }
 
+    // Draws the "EMPLOYEE ASSETS" view from the PDF: name, department, then a numbered list of assets.
     private void RenderEmployeeAssets(Employee employee)
     {
         var grid = new Grid().AddColumn(new GridColumn().PadRight(2)).AddColumn();
@@ -82,6 +95,7 @@ public class EmployeeScreens(
         var index = 1;
         foreach (var a in employee.AssignedAssets.OrderBy(a => a.Category).ThenBy(a => a.PurchaseDate))
         {
+            // (index++) uses the current value, THEN adds 1 for the next row.
             table.AddRow((index++).ToString(), a.Id.ToString(), Markup.Escape(a.TypeName), Markup.Escape(a.DisplayName),
                 Markup.Escape(a.SerialNumber), Markup.Escape(a.Office.Name), ConsoleUi.StatusBadge(lifecycle.GetStatus(a)));
         }
@@ -112,7 +126,7 @@ public class EmployeeScreens(
         if (!ConsoleInput.Confirm($"Remove {asset.DisplayName} from {asset.Employee.FullName}?", true))
             return;
 
-        await assets.AssignAsync(asset.Id, null);
+        await assets.AssignAsync(asset.Id, null); // null = no employee
         ConsoleUi.Success($"{asset.DisplayName} is no longer assigned.");
     }
 
@@ -141,6 +155,7 @@ public class EmployeeScreens(
     {
         var employee = await SelectEmployeeAsync("Employee to delete");
         var count = employee.AssignedAssets.Count;
+        // Warn the user what will happen to the employee's assets.
         var warning = count > 0 ? $" Their {count} asset(s) will become unassigned." : "";
         if (!ConsoleInput.Confirm($"Delete {employee.FullName}?{warning}"))
             return;
@@ -149,6 +164,7 @@ public class EmployeeScreens(
         ConsoleUi.Success($"{employee.FullName} was deleted.");
     }
 
+    // Shows a list of employees to choose from.
     private async Task<Employee> SelectEmployeeAsync(string title)
     {
         var all = await employees.GetAllAsync();
@@ -157,6 +173,7 @@ public class EmployeeScreens(
         return ConsoleInput.Select(title, all, e => $"{e.FullName} · {e.Department} · {e.AssignedAssets.Count} asset(s)");
     }
 
+    // Keeps asking until the email address looks valid.
     private static string AskEmail(string? current)
     {
         while (true)

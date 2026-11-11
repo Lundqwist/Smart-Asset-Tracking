@@ -1,3 +1,12 @@
+// ============================================================================
+// OfficeService.cs
+// ----------------------------------------------------------------------------
+// Business rules for offices (Level 3: global office management).
+// Only Admins may create, edit or delete offices, and an office that still
+// has assets can't be deleted. See AssetService.cs for a longer explanation
+// of how services work.
+// ============================================================================
+
 using Microsoft.Extensions.Logging;
 using SmartAssetTracking.Models;
 using SmartAssetTracking.Repositories;
@@ -19,6 +28,7 @@ public class OfficeService(
     UserSession session,
     ILogger<OfficeService> logger) : IOfficeService
 {
+    // Reading offices is allowed for everyone, so there is no role check here.
     public async Task<IReadOnlyList<Office>> GetAllAsync(CancellationToken ct = default) => await offices.GetAllAsync(ct);
 
     public async Task<Office> GetByIdAsync(int id, CancellationToken ct = default) =>
@@ -51,6 +61,8 @@ public class OfficeService(
     public async Task DeleteAsync(int id, CancellationToken ct = default)
     {
         session.Require(UserRole.Admin);
+
+        // Protect the data: assets must always belong to an office.
         var count = await offices.CountAssetsAsync(id, ct);
         if (count > 0)
             throw new ValidationException($"The office still has {count} asset(s). Move or delete them first.");
@@ -65,6 +77,7 @@ public class OfficeService(
         var errors = new ValidationErrors()
             .RequireText(name, "Office name", 100)
             .RequireText(country, "Country", 60)
+            // The currency must exist in appsettings.json, otherwise we can't convert prices.
             .Require(!string.IsNullOrWhiteSpace(currencyCode) && currency.IsSupported(currencyCode.Trim()),
                 $"Currency '{currencyCode}' is not supported. Configure it in appsettings.json first.");
 

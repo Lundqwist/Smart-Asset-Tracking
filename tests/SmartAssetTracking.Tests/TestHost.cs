@@ -1,3 +1,19 @@
+// ============================================================================
+// TestHost.cs - shared setup for the automated tests
+// ----------------------------------------------------------------------------
+// WHAT ARE AUTOMATED TESTS?
+// Tests are small programs that check our real code and report pass/fail.
+// Run them all with "dotnet test". If a change breaks something, a test
+// fails and tells you what went wrong, before a user ever sees it.
+//
+// This class builds the REAL application (the same services, repositories
+// and rules) with two differences, so the tests are fast and repeatable:
+//   1. The database is EF Core's "InMemory" database: a fake database that
+//      lives in memory and is thrown away after each test. SQL Server isn't needed.
+//   2. "Today" is always 2026-06-15 (FixedTimeProvider), so lifecycle results
+//      such as YELLOW or RED never change depending on the day the tests run.
+// ============================================================================
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,3 +1,11 @@
+// ============================================================================
+// EmployeeService.cs
+// ----------------------------------------------------------------------------
+// Business rules for employees (Level 5). Managers may add and edit
+// employees, but only Admins may delete them. Email addresses must be valid
+// and unique. See AssetService.cs for a longer explanation of services.
+// ============================================================================
+
 using System.Net.Mail;
 using Microsoft.Extensions.Logging;
 using SmartAssetTracking.Models;
@@ -50,19 +58,25 @@ public class EmployeeService(
 
     public async Task DeleteAsync(int id, CancellationToken ct = default)
     {
-        session.Require(UserRole.Admin);
+        session.Require(UserRole.Admin); // deleting is more dangerous, so only Admins may do it
         if (!await employees.DeleteAsync(id, ct))
             throw new NotFoundException($"No employee with ID {id} exists.");
         logger.LogInformation("User {User} deleted employee {EmployeeId}", session.CurrentUser?.Username, id);
     }
 
+    // Checks that an email address looks valid, e.g. "anna@company.com".
+    // "public static" so the menu can also use it to check input while typing.
     public static bool IsValidEmail(string? email)
     {
         if (string.IsNullOrWhiteSpace(email))
             return false;
+
+        // MailAddress is .NET's built-in email parser. It throws a FormatException
+        // if the text is not an email address, so we catch that and return false.
         try
         {
             var address = new MailAddress(email.Trim());
+            // Also require a dot in the domain part ("company.com", not just "company").
             return address.Address == email.Trim() && address.Host.Contains('.');
         }
         catch (FormatException)

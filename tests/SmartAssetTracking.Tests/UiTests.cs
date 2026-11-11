@@ -1,3 +1,15 @@
+// ============================================================================
+// UiTests.cs - automated tests that "click through" the real menus
+// ----------------------------------------------------------------------------
+// Spectre.Console.Testing provides a fake console (TestConsole). Instead of a
+// person pressing keys, the test pushes key presses into it in advance:
+//     PushTextWithEnter("admin")      -> types "admin" and presses Enter
+//     PushKey(ConsoleKey.DownArrow)   -> moves down one item in a menu
+// Then it runs the real Application and checks the text that was drawn.
+// This catches crashes and drawing errors in screens without anyone sitting
+// at the keyboard.
+// ============================================================================
+
 using SmartAssetTracking.UI;
 using Spectre.Console;
 using Spectre.Console.Testing;

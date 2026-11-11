@@ -1,3 +1,11 @@
+// ============================================================================
+// UserScreens.cs
+// ----------------------------------------------------------------------------
+// The "User administration" menu (Level 5: user roles). Admin only:
+// list, create and delete users, change roles and reset passwords.
+// Also "Change my password" in the main menu, which every user can use.
+// ============================================================================
+
 using SmartAssetTracking.Helpers;
 using SmartAssetTracking.Models;
 using SmartAssetTracking.Services;
@@ -45,6 +53,7 @@ public class UserScreens(
         var username = ConsoleInput.Text("Username", maxLength: 50);
         var password = AskNewPassword();
         var role = SelectRole(null);
+        // Linking to an employee lets this user see "My assets".
         var employee = await assetScreens.SelectEmployeeOrNoneAsync("Link to employee (for 'My assets')");
 
         var user = await auth.CreateUserAsync(username, password, role, employee?.Id);
@@ -78,10 +87,12 @@ public class UserScreens(
     private async Task<User> SelectUserAsync(string title)
     {
         var users = await auth.GetUsersAsync();
+        // Mark the logged-in user with "(you)" so admins don't pick themselves by accident.
         return ConsoleInput.Select(title, users,
             u => $"{u.Username} · {u.Role}{(u.Id == session.CurrentUser?.Id ? "  (you)" : "")}");
     }
 
+    // Shows the three roles with a short explanation of what each may do. Admin is listed first.
     private static UserRole SelectRole(UserRole? current) =>
         ConsoleInput.Select("Role", Enum.GetValues<UserRole>().OrderByDescending(r => r),
             r => r switch
@@ -91,6 +102,7 @@ public class UserScreens(
                 _ => "Employee – view assets and own assigned assets"
             } + (r == current ? "  (current)" : ""));
 
+    // Asks for the new password twice, to catch typos, since the characters are hidden.
     private static string AskNewPassword()
     {
         while (true)
@@ -99,7 +111,7 @@ public class UserScreens(
             if (password.Length < AuthService.MinPasswordLength)
             {
                 ConsoleUi.Error($"The password must be at least {AuthService.MinPasswordLength} characters.");
-                continue;
+                continue; // jump back to the start of the loop and ask again
             }
 
             if (ConsoleInput.Secret("Repeat new password") == password)

@@ -1,3 +1,16 @@
+// ============================================================================
+// AssetServiceTests.cs - tests for asset CRUD, validation, sorting and search
+// ----------------------------------------------------------------------------
+// These tests check the business rules in AssetService:
+//   * create / update / delete work and save to the database
+//   * invalid input is rejected with clear error messages
+//   * Employees aren't allowed to change assets (role-based authorization)
+//   * lists are sorted by category first, then by purchase date
+//   * search and filters return the right assets
+// Assert.ThrowsAsync<T> checks that the code throws an exception of type T.
+// That's how we test that bad input is refused.
+// ============================================================================
+
 using SmartAssetTracking.Models;
 using SmartAssetTracking.Repositories;
 using SmartAssetTracking.Services;

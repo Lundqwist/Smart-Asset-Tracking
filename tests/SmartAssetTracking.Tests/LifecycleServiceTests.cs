@@ -1,3 +1,16 @@
+// ============================================================================
+// LifecycleServiceTests.cs - tests for the 3-year lifetime and YELLOW/RED rules
+// ----------------------------------------------------------------------------
+// xUnit basics:
+//   [Fact]      - a single test that always runs the same way.
+//   [Theory]    - one test that runs several times, once per [InlineData(...)] line.
+//                 The values in InlineData are passed in as the method's parameters.
+//   Assert.X    - checks a result. If the check fails, the test fails with a message.
+//
+// Most tests follow the "Arrange - Act - Assert" pattern:
+//   Arrange: prepare the objects,  Act: call the method,  Assert: check the result.
+// ============================================================================
+
 using SmartAssetTracking.Helpers;
 using SmartAssetTracking.Models;
 using SmartAssetTracking.Services;
@@ -15,7 +28,7 @@ public class LifecycleServiceTests
     [InlineData(-12, LifecycleStatus.Normal)]   // 2 years left
     [InlineData(-30, LifecycleStatus.Normal)]   // exactly 6 months left
     [InlineData(-31, LifecycleStatus.Red)]      // 5 months left -> less than 6 months
-    [InlineData(-33, LifecycleStatus.Yellow)]   // exactly 3 months left -> not "less than 3"... see below
+    [InlineData(-33, LifecycleStatus.Yellow)]   // 3 months minus 1 day left (the extra -1 day is added below)
     [InlineData(-34, LifecycleStatus.Yellow)]   // 2 months left -> less than 3 months
     [InlineData(-36, LifecycleStatus.Expired)]  // end of life today
     [InlineData(-48, LifecycleStatus.Expired)]

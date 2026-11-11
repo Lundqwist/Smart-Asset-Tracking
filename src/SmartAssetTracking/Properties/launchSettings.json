@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SmartAssetTracking": {
+      "commandName": "Project",
+      "workingDirectory": "$(ProjectDir)"
+    }
+  }
+}

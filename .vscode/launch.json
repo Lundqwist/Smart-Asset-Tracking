@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Smart Asset Tracking",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/SmartAssetTracking/bin/Debug/net10.0/SmartAssetTracking.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/SmartAssetTracking",
+      "console": "integratedTerminal",
+      "stopAtEntry": false
+    }
+  ]
+}

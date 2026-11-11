@@ -11,8 +11,10 @@ using Spectre.Console;
 // The menus need a real, interactive terminal (arrow keys, colours, clearing the screen).
 if (!AnsiConsole.Profile.Capabilities.Interactive || Console.IsInputRedirected || Console.IsOutputRedirected)
 {
-    Console.Error.WriteLine("Smart Asset Tracking is an interactive console application. " +
-                            "Please run it in a terminal window (e.g. 'dotnet run --project src/SmartAssetTracking').");
+    Console.Error.WriteLine("Smart Asset Tracking is an interactive console application and needs a real terminal.");
+    Console.Error.WriteLine("  - Terminal:  dotnet run --project src/SmartAssetTracking");
+    Console.Error.WriteLine("  - VS Code:   use the 'Smart Asset Tracking' launch configuration (runs in the integrated terminal),");
+    Console.Error.WriteLine("               not the Debug Console.");
     return 2;
 }
 

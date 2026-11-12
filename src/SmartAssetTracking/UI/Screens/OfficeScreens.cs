@@ -54,7 +54,7 @@ public class OfficeScreens(
                 s.OfficeId.ToString(), Markup.Escape(s.Office), Markup.Escape(s.Country), $"{info.Code} ({Markup.Escape(info.Symbol)})",
                 info.RateFromUsd.ToString("0.####"),   // "0.####" = up to 4 decimals, without trailing zeros
                 s.AssetCount.ToString(),
-                s.ExpiringSoon > 0 ? $"[yellow]{s.ExpiringSoon}[/]" : "0",
+                s.ExpiringSoon > 0 ? $"[red]{s.ExpiringSoon}[/]" : "0",
                 Markup.Escape(currency.Format(s.TotalValueLocal, s.Currency)),
                 Markup.Escape(currency.Format(s.TotalValueUsd, "USD")));
         }

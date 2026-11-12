@@ -54,10 +54,10 @@ public class ReportScreens(
         var keyFigures = new Grid().AddColumn(new GridColumn().PadRight(2)).AddColumn(new GridColumn().RightAligned());
         keyFigures.AddRow("[grey]Total assets[/]", $"[bold]{stats.TotalAssets}[/]");
         keyFigures.AddRow("[grey]Total employees[/]", $"[bold]{stats.TotalEmployees}[/]");
-        keyFigures.AddRow("[grey]Expiring soon[/]", $"[bold yellow]{stats.ExpiringSoon}[/]");
+        keyFigures.AddRow("[grey]Expiring soon[/]", $"[bold red]{stats.ExpiringSoon}[/]");
         keyFigures.AddRow("[grey]Expired[/]", $"[bold grey]{stats.Expired}[/]");
         keyFigures.AddRow("[grey]Unassigned assets[/]", $"[bold]{stats.UnassignedAssets}[/]");
-        keyFigures.AddRow("[grey]Maintenance due (30d)[/]", stats.MaintenanceDue > 0 ? $"[bold red]{stats.MaintenanceDue}[/]" : "[bold]0[/]");
+        keyFigures.AddRow("[grey]Maintenance due (30d)[/]", stats.MaintenanceDue > 0 ? $"[bold yellow]{stats.MaintenanceDue}[/]" : "[bold]0[/]");
         keyFigures.AddEmptyRow();
         keyFigures.AddRow("[grey]Total company value[/]", $"[bold green]{Value(stats.TotalCompanyValue)}[/]");
         keyFigures.AddRow("[grey]Top asset type[/]", $"[bold]{Markup.Escape(stats.TopAssetType ?? "—")}[/] [grey]({stats.TopAssetTypeCount})[/]");

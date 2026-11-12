@@ -185,8 +185,8 @@ public class AssetView(
             return "[grey]not scheduled[/]";
         var date = asset.NextMaintenanceDate.Value;
         var days = (date - lifecycle.Today).Days;
-        return days < 0 ? $"[red]{date:yyyy-MM-dd} (overdue {-days}d)[/]"
-            : days <= lifecycleOptions.MaintenanceDueSoonDays ? $"[yellow]{date:yyyy-MM-dd} (in {days}d)[/]"
+        return days < 0 ? $"[yellow]{date:yyyy-MM-dd} (overdue {-days}d)[/]"
+            : days <= lifecycleOptions.MaintenanceDueSoonDays ? $"[red]{date:yyyy-MM-dd} (in {days}d)[/]"
             : $"{date:yyyy-MM-dd} [grey](in {days}d)[/]";
     }
 

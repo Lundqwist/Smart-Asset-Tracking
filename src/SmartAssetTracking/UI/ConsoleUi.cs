@@ -54,9 +54,9 @@ public static class ConsoleUi
     // Spectre would otherwise think it's a colour tag and crash.
     public static void Success(string message) => AnsiConsole.MarkupLine($"[green]✔ {Markup.Escape(message)}[/]");
 
-    public static void Error(string message) => AnsiConsole.MarkupLine($"[red]✖ {Markup.Escape(message)}[/]");
+    public static void Error(string message) => AnsiConsole.MarkupLine($"[yellow]✖ {Markup.Escape(message)}[/]");
 
-    public static void Warning(string message) => AnsiConsole.MarkupLine($"[yellow]! {Markup.Escape(message)}[/]");
+    public static void Warning(string message) => AnsiConsole.MarkupLine($"[red]! {Markup.Escape(message)}[/]");
 
     public static void Info(string message) => AnsiConsole.MarkupLine($"[grey]{Markup.Escape(message)}[/]");
 
@@ -93,8 +93,8 @@ public static class ConsoleUi
     // Text colour for a table row, based on the asset's lifecycle status (Level 2: highlight assets).
     public static string StatusColor(LifecycleStatus status) => status switch
     {
-        LifecycleStatus.Yellow => "yellow",
-        LifecycleStatus.Red => "red",
+        LifecycleStatus.Yellow => "red",
+        LifecycleStatus.Red => "yellow",
         LifecycleStatus.Expired => "grey",
         _ => "white"
     };
@@ -102,8 +102,8 @@ public static class ConsoleUi
     // A small coloured "badge" with the status name, e.g. a yellow box saying YELLOW.
     public static string StatusBadge(LifecycleStatus status) => status switch
     {
-        LifecycleStatus.Yellow => "[black on yellow] YELLOW [/]",
-        LifecycleStatus.Red => "[white on red] RED [/]",
+        LifecycleStatus.Yellow => "[white on red] YELLOW [/]",
+        LifecycleStatus.Red => "[black on yellow] RED [/]",
         LifecycleStatus.Expired => "[white on grey] EXPIRED [/]",
         _ => "[black on green] NORMAL [/]"
     };
